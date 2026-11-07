@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Guardrails · DisputeDesk{% endblock %}
+{% block content %}
+<div class="page-head"><div>
+  <h1>Guardrails</h1>
+  <div class="sub">The limits your agents work inside. Plain code enforces them, not the AI. The AI can't change them, and every change is logged.</div>
+</div></div>
+
+<div class="card">
+  <form method="post" action="/rules" style="display:grid;gap:16px;max-width:460px">
+    <label>
+      <b>Suggest conceding part of disputes up to</b>
+      <div style="display:flex;align-items:center;gap:8px;margin:6px 0 4px"><span class="muted">₹</span><input type="text" name="settle_max" value="{{ settle_max }}" inputmode="decimal" style="max-width:140px"></div>
+      <span class="muted small">Above this, DisputeDesk recommends contesting in full or a manual review.</span>
+    </label>
+    <label>
+      <b>Never concede more than this share of the disputed amount</b>
+      <div style="display:flex;align-items:center;gap:8px;margin:6px 0 4px"><input type="text" name="max_offer_pct" value="{{ max_offer_pct }}" inputmode="numeric" style="max-width:140px"><span class="muted">%</span></div>
+      <span class="muted small">A bigger concession is blocked, even if you type a bigger number.</span>
+    </label>
+    <div><button>Save rules</button></div>
+  </form>
+</div>
+
+<div class="card small">
+  <h3>Call recording consent</h3>
+  {% if calls_consent %}
+  <div>You confirmed on {{ calls_consent[:10] }} that everyone on the calls you add knew they were being recorded and agreed.</div>
+  <form method="post" action="/recordings/consent" style="margin-top:8px"><button class="secondary" name="consent" value="no">Withdraw</button></form>
+  {% else %}
+  <div class="muted">Not confirmed. You'll be asked when you add your first call.</div>
+  {% endif %}
+</div>
+
+<div class="card small">
+  <h3>Always on</h3>
+  <ul>
+    <li>Nothing is sent to Razorpay until you click a button.</li>
+    <li>Accepting a claim needs you to type ACCEPT.</li>
+    <li>A call can't reach your reply until you confirm the transcript, and it never replaces carrier proof.</li>
+    <li>Buyers who dispute most of their orders never get a concession suggestion.</li>
+    <li>Text written by the buyer is treated as data, never as instructions to the AI.</li>
+  </ul>
+</div>
+{% endblock %}

@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Calls · DisputeDesk{% endblock %}
+{% block content %}
+<div class="page-head"><div>
+  <h1>Calls</h1>
+  <div class="sub">Drop a recording anywhere in the app. The onboarding agent transcribes it, works out who said what, finds the case and reads it. You only step in to confirm.</div>
+</div></div>
+
+<div class="drop-card" style="margin-bottom:16px">
+  <h3>Drop a call recording anywhere</h3>
+  <div class="small muted">Under 10 MB. Works best in English. Put the order number in the file name or say it on the call.</div>
+  <div class="row">
+    {% if stt_on %}<button data-add-call>Choose a recording</button>{% endif %}
+    {% if demo %}<button class="{{ 'secondary' if stt_on }}" data-sample-call>Watch a sample call</button>{% endif %}
+  </div>
+  {% if not stt_on and not demo %}<div class="small muted">Audio needs a Gnani key. You can paste a transcript below.</div>{% endif %}
+</div>
+
+<div id="page-live" hidden style="margin-bottom:16px"></div>
+
+{% macro row(c) %}
+<div class="ev">
+  <div class="small" style="flex:1;min-width:0">
+    <b style="overflow-wrap:anywhere">{{ c.filename or 'Pasted transcript' }}</b> <span class="muted">Call with the {{ c.party }} · {{ c.call_date }} · {{ c.origin }}</span>
+    {% if c.dispute_id %}<div><a href="/disputes/{{ c.dispute_id }}#calls">{{ c.dispute_id }}</a> <span class="muted">selected by {{ c.matched_on }}</span></div>{% endif %}
+    {% if c.error %}<div style="color:var(--bad)">{{ c.error }}</div>{% endif %}
+    {% if c.transcript %}<details style="margin-top:4px"><summary class="muted">Read the transcript</summary><div class="quote" style="white-space:pre-wrap">{{ c.transcript }}</div></details>{% endif %}
+    {% if c.status == 'ready' and not c.dispute_id and cases %}
+    <form method="post" action="/recordings/{{ c.id }}/assign" style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+      <select name="dispute_id" aria-label="Choose a case">{% for x in cases %}<option>{{ x }}</option>{% endfor %}</select>
+      <button class="secondary">Add to this case</button>
+    </form>{% endif %}
+    {% if c.status == 'ready' and c.dispute_id and not c.reviewed %}<div style="margin-top:8px"><a class="btn" href="/disputes/{{ c.dispute_id }}#calls">Check it</a></div>{% endif %}
+  </div>
+  <form method="post" action="/recordings/{{ c.id }}/delete"><button class="secondary">Remove</button></form>
+</div>
+{% endmacro %}
+
+{% if failed or unmatched or to_check %}
+<div class="card" id="attention">
+  <div class="card-head"><h3>Waiting on you</h3><span class="badge b-warn">{{ failed | length + unmatched | length + to_check | length }}</span></div>
+  {% if unmatched %}<div class="small muted">Calls that don't mention one open case's order, AWB number, customer email or case ID need you to choose. The agent won't guess, because that could put a stranger's call in a case.</div>{% endif %}
+  {% for c in failed %}{{ row(c) }}{% endfor %}
+  {% for c in to_check %}{{ row(c) }}{% endfor %}
+  {% for c in unmatched %}{{ row(c) }}{% endfor %}
+</div>
+{% endif %}
+
+<div class="card">
+  <div class="card-head"><h3>In your cases</h3><span class="small muted">{{ selected | length }}</span></div>
+  {% for c in selected %}{{ row(c) }}{% else %}<div class="small muted">No confirmed calls yet.</div>{% endfor %}
+</div>
+
+<details class="section">
+  <summary>Paste a transcript instead<span class="hint">If you have no audio</span></summary>
+  <div class="body">
+  <form method="post" action="/recordings" class="stack">
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <label class="small">Call with<br><select name="party"><option value="buyer">Buyer</option><option value="carrier">Delivery person or carrier</option></select></label>
+      <label class="small">Date of call<br><input type="date" name="call_date" max="{{ today }}" required></label>
+    </div>
+    <label class="small" for="call-text"><b>Transcript</b> <span class="muted">Start each line with who spoke: Agent, Seller, Buyer, Driver or Carrier.</span></label>
+    <textarea id="call-text" name="transcript" required placeholder="Agent: Thanks for calling about order DD-1003.&#10;Buyer: ..."></textarea>
+    <label class="small" style="display:flex;gap:8px;align-items:flex-start"><input type="checkbox" name="consent" value="yes" required style="margin-top:3px"><span>Everyone on this call knew it was being recorded and agreed. Some US states, including California, require this.</span></label>
+    <div><button class="secondary">Save call</button></div>
+  </form>
+  </div>
+</details>
+{% endblock %}

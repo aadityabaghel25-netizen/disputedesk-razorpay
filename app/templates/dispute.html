@@ -1,0 +1,380 @@
+{% extends "base.html" %}
+{% block title %}{{ d.dispute_id }} · DisputeDesk{% endblock %}
+{% block head %}
+{% if running %}<noscript><meta http-equiv="refresh" content="4"></noscript>{% endif %}
+<style>
+  .layout { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 18px; align-items: start; }
+  .decision { position: sticky; top: 16px; }
+  @media (max-width: 1080px) { .layout { grid-template-columns: 1fr; } .decision { position: static; } .layout > aside { order: -1; } }
+  .progress { display: flex; gap: 0; margin: 16px 0 2px; list-style: none; padding: 0; }
+  .progress li { flex: 1; position: relative; font-size: 12.5px; color: var(--muted); padding-top: 20px; min-width: 0; }
+  .progress li::before { content: ""; position: absolute; top: 5px; left: 0; right: 0; height: 2px; background: var(--line); }
+  .progress li::after { content: ""; position: absolute; top: 0; left: 0; width: 12px; height: 12px; border-radius: 50%; background: var(--card); border: 2px solid var(--line); }
+  .progress li.done::before, .progress li.done::after { background: var(--ok); border-color: var(--ok); }
+  .progress li.now { color: var(--text); font-weight: 600; }
+  .progress li.now::after { border-color: var(--brand); background: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); }
+  .progress li:last-child::before { display: none; }
+  .hero { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .hero h1 { margin: 0; font-size: 24px; font-weight: 800; }
+  .amount { font-size: 26px; font-weight: 800; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+  .verdict { border-radius: var(--radius); padding: 18px 20px; margin-bottom: 16px; border: 1px solid; }
+  .verdict.fight { background: var(--ok-bg); border-color: color-mix(in srgb, var(--ok) 30%, transparent); }
+  .verdict.settle { background: var(--warn-bg); border-color: color-mix(in srgb, var(--warn) 30%, transparent); }
+  .verdict.review { background: var(--bad-bg); border-color: color-mix(in srgb, var(--bad) 30%, transparent); }
+  .verdict .lbl { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); }
+  .verdict .big { font-size: 30px; font-weight: 800; letter-spacing: -.02em; margin: 2px 0 6px; }
+  .verdict.fight .big { color: var(--ok); } .verdict.settle .big { color: var(--warn); } .verdict.review .big { color: var(--bad); }
+  .checks { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 18px; margin-top: 12px; font-size: 13px; }
+  @media (max-width: 700px) { .checks { grid-template-columns: 1fr; } }
+  .checks ul { margin: 4px 0 0; padding-left: 0; list-style: none; }
+  .checks li { margin: 3px 0; }
+  .timeline { list-style: none; margin: 0; padding: 0; }
+  .timeline li { position: relative; padding: 0 0 14px 34px; }
+  .timeline li::before { content: ""; position: absolute; left: 11px; top: 24px; bottom: 0; width: 2px; background: var(--line); }
+  .timeline li:last-child::before { display: none; }
+  .timeline .n { position: absolute; left: 0; top: 0; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center;
+                 font-size: 11.5px; font-weight: 700; background: var(--card); border: 2px solid var(--line); }
+  .timeline .who { font-weight: 700; }
+  .deadline-big { font-size: 34px; font-weight: 800; letter-spacing: -.02em; line-height: 1.1; }
+  .gate { display: flex; gap: 10px; align-items: flex-start; font-size: 12.5px; padding: 10px 12px; border-radius: 10px; background: var(--brand-soft); color: var(--text); margin-bottom: 12px; }
+  .msg-buyer { padding: 12px 14px; border-radius: 12px; background: var(--line-2); margin-top: 14px; font-size: 14px; }
+  .msg-buyer.flagged { background: var(--bad-bg); border: 1px dashed color-mix(in srgb, var(--bad) 45%, transparent); }
+</style>
+{% endblock %}
+{% block content %}
+<a class="crumb" href="/">← Command center</a>
+{% set stage = 'decided' if outcome else 'filed' if submissions else 'approve' if a else 'build' %}
+{% set dec = a.advice.decision if a else None %}
+
+<div class="card">
+  <div class="hero">
+    <div>
+      <h1>{{ reason_label(d.reason) }}</h1>
+      <div class="muted small mono" style="margin-top:2px">{{ d.dispute_id }}{% if d.reason_code %} · code {{ d.reason_code }}{% endif %}{% if d.phase %} · {{ d.phase | replace('_', ' ') }}{% endif %}</div>
+    </div>
+    <div class="hero-numbers">
+      {% set u = deadline.urgency %}
+      {% if deadline.due and not outcome and not submissions %}<div><div class="muted small">{{ 'Reply within' if u != 'overdue' else 'Reply' }}</div>
+        <div class="amount" style="color:{{ 'var(--bad)' if u in ('overdue','critical') else 'var(--warn)' if u == 'soon' else 'var(--ok)' }}">{% if u == 'overdue' %}Overdue{% else %}{{ (deadline.hours_left / 24) | round(1) }} days{% endif %}</div>
+        <div class="muted" style="font-size:11.5px">by {{ deadline.due[:16].replace('T', ' ') }} UTC{% if deadline.estimated %} · estimated, Razorpay sent no date{% endif %}</div></div>{% endif %}
+      <div><div class="muted small">Disputed</div><div class="amount">{{ amount }}</div></div>
+    </div>
+  </div>
+  <ol class="progress" aria-label="Case progress">
+    <li class="{{ 'now' if stage == 'build' else 'done' }}">AI builds the case</li>
+    <li class="{{ 'now' if stage == 'approve' else 'done' if stage in ('filed','decided') }}">You approve</li>
+    <li class="{{ 'now' if stage == 'filed' else 'done' if stage == 'decided' }}">Bank reviews</li>
+    <li class="{{ 'done' if stage == 'decided' }}">{% if outcome == 'won' %}You won{% elif outcome == 'lost' %}Customer won{% elif outcome == 'closed' %}Closed{% else %}Decision{% endif %}</li>
+  </ol>
+  {% for m in statements %}
+    {% set flagged = m.posted_by == 'BUYER' and (injection_flags(m.content or '') or (a and a.triage.manipulation_attempt)) %}
+    <div class="msg-buyer {{ 'flagged' if flagged }}">
+      <div class="small muted" style="margin-bottom:3px"><b>{{ m.posted_by | title }}</b> wrote{% if m.time_posted %} on {{ m.time_posted[:10] }}{% endif %}
+        {% if flagged %}<span class="badge b-bad" style="margin-left:6px">Tries to instruct the AI, ignored</span>{% endif %}</div>
+      “{{ m.content }}”
+    </div>
+  {% endfor %}
+  <div class="run-strip {{ 'working' if running }}" id="case-live" data-case="{{ d.dispute_id }}">
+    <div id="case-live-line" style="display:flex;gap:9px;align-items:center;flex:1;min-width:220px">
+      {% if running %}<span class="pulse working"></span><span><b>AI team working…</b> Building your case. This page updates by itself.</span>
+      {% elif a %}<span class="pulse watching"></span><span><b>Team finished</b>{% if a.seconds >= 1 %} in {{ a.seconds | round | int }}s{% endif %}. {{ a.claims_kept | length }} claims kept, {{ a.claims_struck | length }} struck. Nothing has gone to Razorpay.</span>
+      {% else %}<span class="pulse idle"></span><span>The team gathers the evidence and drafts a reply. Nothing is sent to Razorpay.</span>{% endif %}
+    </div>
+    <form method="post" action="/disputes/{{ d.dispute_id }}/analyze">
+      <button {% if running %}disabled{% endif %}{% if a %} class="secondary"{% endif %}>
+        {% if running %}AI team working…{% elif a %}↻ Run the AI team again{% else %}Run the AI team{% endif %}</button>
+    </form>
+    {% if a and not running %}<div class="run-chips" aria-label="Agents that ran">{% for s in a.steps %}{% if s.kind != 'tool' %}<span class="run-chip {{ 'ai' if 'ai' in s.kind }}" title="{{ s.what }}">{{ s.agent }}</span>{% endif %}{% endfor %}</div>{% endif %}
+  </div>
+</div>
+
+{% if a %}
+<div class="layout">
+  <div>
+    {% set rc = a.advice.receipt or {} %}
+    <div class="verdict {{ dec }}">
+      <div class="lbl">Recommendation</div>
+      <div class="big">{{ dec | upper }}</div>
+      <div>{{ a.advice.why }}</div>
+      {% if a.changed_from %}<div class="small" style="margin-top:6px"><span class="badge b-info">Changed from {{ a.changed_from | upper }}</span> after the latest evidence.</div>{% endif %}
+      <div class="muted small" style="margin-top:4px">{{ a.triage.summary }}</div>
+      <div class="voice small" style="margin-top:10px">
+        {% if voice %}<b>Suniye</b> <span class="muted">· this case in Hinglish, voiced by Gnani</span>
+          <audio controls preload="none" src="/disputes/{{ d.dispute_id }}/voice" style="width:100%;margin-top:4px"></audio>
+        {% else %}<b>Voice brief</b> <span class="muted">· add a Gnani key to hear this in Hinglish</span>{% endif %}
+        <details><summary class="muted">What it says (written by code, not AI)</summary><div class="quote" style="font-style:normal">{{ voice_text }}</div></details>
+      </div>
+      {% if a.buyer_risk and a.buyer_risk.level != 'low' %}
+        <div style="margin-top:8px"><span class="badge {{ 'b-bad' if a.buyer_risk.level == 'high' else 'b-warn' }}">{{ 'Serial disputer' if a.buyer_risk.level == 'high' else 'Buyer has disputed before' }}</span>
+          <span class="small">{{ a.buyer_risk.why }}</span></div>
+      {% endif %}
+      {% for w in a.warnings %}{% if 'instructions to an AI' not in w %}<div class="small" style="margin-top:8px;color:var(--warn)"><span class="st warn" aria-hidden="true">!</span> {{ w }}</div>{% endif %}{% endfor %}
+      <div class="checks">
+        <div><b>What the bank expects</b><ul>{% for x in a.advice.required_met %}<li><span class="st ok" aria-hidden="true">✓</span>{{ x }}</li>{% else %}<li class="muted">Nothing found yet</li>{% endfor %}</ul></div>
+        <div><b>Missing</b><ul>{% for x in a.advice.required_missing %}<li><span class="st bad" aria-hidden="true">✕</span>{{ x }}</li>{% else %}<li class="muted">Nothing missing</li>{% endfor %}</ul></div>
+      </div>
+      <details class="small" style="margin-top:10px"><summary><b>Decision receipt</b> <span class="muted">(decided by code, not AI)</span></summary>
+        <div style="margin-top:6px">Rule matched: <b>{{ rc.rule }}</b></div>
+        <div class="muted">Facts: {{ rc.verified_claims }} verified claims · {{ rc.expected_found }} expected items found, {{ rc.expected_missing }} missing · {{ rc.disputed }} {{ rc.currency }} disputed · concession limit {{ rc.settle_limit }} · max concession {{ rc.max_offer_pct }}% · customer risk {{ rc.buyer_risk }} · partial contest allowed: {{ 'yes' if rc.partial_allowed else 'no' }}</div>
+      </details>
+    </div>
+
+    {% set needs_carrier = gaps | selectattr('kind', 'equalto', 'carrier_record') | list %}
+    {% set show_form = gaps or documents %}
+    <details class="section proof-card{{ ' gap' if gaps }}" id="proof"{% if gaps %} open{% endif %}>
+      <summary>{{ 'Close the proof gap' if gaps else 'Proof you added' if documents else 'Add your own proof' }}<span class="hint">{% if gaps %}{{ gaps | length }} missing{% elif documents %}{{ documents | length }} added{% else %}Optional{% endif %}</span></summary>
+      <div class="body">
+        {% for g in gaps %}<div class="gap-row"><span class="st bad" aria-hidden="true">✕</span><div class="small"><b>{{ g.label }}</b><div class="muted">{{ g.how }}</div></div></div>{% endfor %}
+        {% for doc in documents %}
+        <div class="gap-row"><span class="st ok" aria-hidden="true">✓</span><div class="small" style="flex:1;min-width:0"><b style="overflow-wrap:anywhere">{{ doc.filename }}</b>
+          <div class="muted">{% if doc.doc_type == 'carrier_record' %}{{ doc.fields.carrier }} {{ doc.fields.tracking_number }}, delivered {{ doc.fields.delivered_on }} to {{ doc.fields.delivered_to }}{% else %}{{ 'Photo' if doc.doc_type == 'photo' else 'Document' }}{% endif %}{% if demo %} · demo keeps only its fingerprint{% endif %}</div></div>
+          <form method="post" action="/disputes/{{ d.dispute_id }}/documents/{{ doc.id }}/delete"><button class="secondary">Remove</button></form></div>
+        {% endfor %}
+        {% if demo and needs_carrier and not documents %}
+        <form method="post" action="/disputes/{{ d.dispute_id }}/documents/sample" class="sample-proof"><button>Add a sample courier POD</button> <span class="small muted">Made up for this demo. Watch the recommendation update.</span></form>
+        {% endif %}
+        <details class="add-proof"{% if gaps and not demo %} open{% endif %}><summary class="small"><b>Add a file you have</b></summary>
+        <form method="post" action="/disputes/{{ d.dispute_id }}/documents" enctype="multipart/form-data" class="proof-form">
+          <div class="row">
+            <label class="small">What is it?<br><select name="doc_type" data-doc-type>
+              <option value="carrier_record"{% if needs_carrier or not gaps %} selected{% endif %}>Courier proof of delivery (POD)</option>
+              <option value="photo"{% if gaps and not needs_carrier and gaps[0].kind == 'photo' %} selected{% endif %}>Photo of the item</option>
+              <option value="other"{% if gaps and not needs_carrier and gaps[0].kind == 'other' %} selected{% endif %}>Other document</option></select></label>
+            <label class="small">File<br><input type="file" name="file" accept="application/pdf,image/jpeg,image/png" required></label>
+          </div>
+          <div class="row" data-carrier-fields>
+            <label class="small">Courier<br><select name="carrier">{% for x in carriers %}<option>{{ x }}</option>{% endfor %}</select></label>
+            <label class="small">AWB number<br><input type="text" name="tracking_number" autocomplete="off"></label>
+            <label class="small">Shipped<br><input type="date" name="shipped_on" max="{{ today }}"></label>
+            <label class="small">Delivered<br><input type="date" name="delivered_on" max="{{ today }}"></label>
+            <label class="small wide">Delivered to, as shown on the record<br><input type="text" name="delivered_to" autocomplete="off"></label>
+          </div>
+          <label class="small check"><input type="checkbox" name="genuine" value="yes" required><span>This is a genuine record, and what I typed matches it.</span></label>
+          <div><button class="secondary">Add to this case</button> <span class="small muted">PDF, JPG, PNG or GIF, under 10 MB. The team re-runs by itself.</span></div>
+        </form></details>
+        <div class="muted small" style="margin-top:8px">Code checks the dates and the address. It can't confirm the file with the courier, so your reply says who supplied it, and the bank makes the final call.</div>
+      </div>
+    </details>
+
+    <div class="card">
+      <div class="card-head"><h3>What your reply will say</h3>
+        {% set quoted = a.claims_kept | selectattr('call_only') | list | length %}
+        <span class="small muted">{{ a.claims_kept | length - quoted }} proven{% if quoted %} · {{ quoted }} quoted from calls{% endif %}{% if a.claims_struck %} · {{ a.claims_struck | length }} struck{% endif %}</span></div>
+      {% for c in a.claims_kept %}
+        <div class="claim"><span class="ic">✓</span><div><div class="t">{{ c.text }}</div>
+          <details class="claim-proof"><summary class="meta">{{ 'Quoted from a call, not proof that it happened:' if c.call_only else 'Proof:' }} {% for i in c.evidence_ids %}<span class="cite">{{ i }}</span> {% endfor %}</summary>
+            {% for i in c.evidence_ids %}{% set e = evidence | selectattr('id', 'equalto', i) | list | first %}{% if e %}
+            <div class="proof-row"><span class="cite">{{ e.id }}</span><div><b>{{ e.source }}</b><div class="muted">{{ e.summary }}</div>{% if e.content.text %}<div class="quote">“{{ e.content.text }}”</div>{% endif %}</div></div>
+            {% endif %}{% endfor %}
+          </details></div></div>
+      {% endfor %}
+      {% for c in a.claims_struck %}
+        <div class="claim struck"><span class="ic">✕</span><div><div class="t">{{ c.text }}</div>
+          <div class="meta" style="color:var(--bad)">Removed by {{ c.checked_by }}: {{ c.why }}</div></div></div>
+      {% endfor %}
+      {% if not a.claims_kept and not a.claims_struck %}<p class="muted">No claims could be proven.</p>{% endif %}
+    </div>
+
+{% set review = a.call_review if a and a.call_review else [] %}
+{% if calls %}
+{% set any_check = calls | selectattr('reviewed', 'equalto', 0) | list %}
+<details class="section" id="calls"{% if any_check %} open{% endif %}>
+  <summary>What your calls say<span class="hint">{{ calls | length }} call{{ '' if calls | length == 1 else 's' }} selected by the agent</span></summary>
+  <div class="body">
+    {% for call in calls %}
+    {% set c = review | selectattr('call_id', 'equalto', call.id) | list | first %}
+    {% set to_check = call.status == 'ready' and not call.reviewed %}
+    <div class="call-card {{ 'check' if to_check }}">
+      <div class="meta small">
+        <b>Call with the {{ call.party }}</b> <span class="muted">{{ call.call_date }}{% if call.filename %} · {{ call.filename }}{% endif %}{% if call.matched_on %} · selected by {{ call.matched_on }}{% endif %}</span>
+        {% if call.status != 'ready' %}<span class="badge b-ai"><span class="pulse working"></span>{{ call_labels[call.status] }}</span>
+        {% elif to_check %}<span class="badge b-warn">Needs your check</span>{% else %}<span class="badge b-ok">Confirmed</span>{% endif %}
+      </div>
+      {% if c and c.flagged %}<div class="small" style="margin-top:6px"><span class="badge b-bad">Tries to instruct the AI, ignored</span> <span class="muted">Nothing from this call is used.</span></div>{% endif %}
+      {% if c %}{% for f in c.findings %}
+      <div class="quote small">“{{ f.quote }}”</div>
+      <div class="finding-meta small">
+        <span class="muted">{{ f.speaker | title }}</span>
+        <span class="badge {{ 'b-ok' if f.stance == 'helps' else 'b-bad' if f.stance == 'hurts' else 'b-gray' }}">{{ 'Helps you' if f.stance == 'helps' else 'May hurt you, left out of your reply' if f.stance == 'hurts' else 'Neutral' }}</span>
+        {% if f.contradicts %}<span class="badge b-warn">May contradict the buyer's claim</span>{% endif %}
+        {% if f.evidence_id %}<span class="cite">{{ f.evidence_id }}</span>{% elif to_check and f.stance != 'hurts' %}<span class="muted">Joins your reply after you confirm</span>{% endif %}
+      </div>
+      {% else %}{% if not c.flagged and call.status == 'ready' %}<div class="small muted" style="margin-top:6px">Nothing here matters to this dispute.</div>{% endif %}{% endfor %}{% endif %}
+      {% if to_check %}
+      <form method="post" action="/recordings/{{ call.id }}/confirm" style="margin-top:10px">
+        <label class="small" for="check-{{ call.id }}"><b>Is this what was said, and by whom?</b> <span class="muted">The agent worked out the speakers. Fix any word or name that's wrong.</span></label>
+        <textarea id="check-{{ call.id }}" name="transcript">{{ call.transcript }}</textarea>
+        <div style="margin-top:8px"><button>Looks right, use these quotes</button></div>
+      </form>
+      {% elif call.transcript %}
+      <details class="small" style="margin-top:8px"><summary class="muted">Read the transcript</summary><div class="quote" style="white-space:pre-wrap">{{ call.transcript }}</div></details>
+      {% endif %}
+    </div>
+    {% endfor %}
+    {% if a and a.call_next_steps %}<div class="gate"><div><b>What to do next</b>{% for x in a.call_next_steps %}<div>{{ x }}</div>{% endfor %}</div></div>{% endif %}
+    <div class="muted small">Calls show what someone said. They don't replace the courier's proof of delivery, and they don't change the recommendation. <a href="/recordings">All calls</a></div>
+  </div>
+</details>
+{% endif %}
+
+    {% if a.checklist %}
+    <div class="grid">
+      <div class="card">
+        {% set v = a.checklist.verdict %}
+        <div class="card-head"><h3>Contest checklist</h3>
+          <span class="badge {{ 'b-ok' if v == 'may_qualify' else 'b-bad' if v == 'excluded' else 'b-warn' }}">{{ 'Has what banks ask for' if v == 'may_qualify' else 'Past our scope' if v == 'excluded' else 'Proof missing' if v == 'missing_proof' else 'Unclear' }}</span></div>
+        <div class="small" style="margin-bottom:8px">{{ a.checklist.summary }}</div>
+        {% for c in a.checklist.checks %}
+        <div class="small" style="padding:4px 0;border-top:1px solid var(--line-2)"><span class="st {{ 'ok' if c.state == 'pass' else 'bad' if c.state == 'fail' else 'q' }}" aria-hidden="true">{{ '✓' if c.state == 'pass' else '✕' if c.state == 'fail' else '?' }}</span><b>{{ c.label }}</b>
+          <div class="muted">{{ c.why }}</div></div>
+        {% endfor %}
+        <div class="muted small" style="margin-top:8px">From Razorpay's dispute guide and common bank practice. The customer's bank decides.</div>
+      </div>
+      <div class="card">
+        <h3>What each choice costs</h3>
+        {% set m = a.money %}
+        <table class="small">
+          <tr><td>Contest and win</td><td class="num"><b>{{ m.win }} {{ m.currency }}</b></td></tr>
+          <tr><td>Contest and lose</td><td class="num"><b>{{ m.lose }} {{ m.currency }}</b></td></tr>
+          {% if m.offer %}<tr><td>Concede part, win the rest</td><td class="num"><b>{{ m.offer }} {{ m.currency }}</b></td></tr>{% endif %}
+          <tr><td>Accept the dispute</td><td class="num"><b>{{ m.accept }} {{ m.currency }}</b></td></tr>
+        </table>
+        {% if m.breakeven_pct is not none %}<div class="small" style="margin-top:8px">Contesting everything beats conceding part if your chance of winning is above <b>{{ m.breakeven_pct }}%</b>. We don't guess that chance: banks don't publish win rates.</div>{% endif %}
+        <div class="muted small" style="margin-top:8px">{{ m.basis }} Calculated by code in paise. Excludes goods and shipping costs.</div>
+      </div>
+    </div>
+    {% endif %}
+
+    <details class="section">
+      <summary>Evidence<span class="hint">{{ evidence | length }} items</span></summary>
+      <div class="body">
+      {% for e in evidence %}
+        <div class="ev {{ 'untrusted' if not e.trusted }}" id="{{ e.id }}">
+          <span class="id">{{ e.id }}</span>
+          <div class="small" style="flex:1">
+            <b>{{ e.source }}</b>
+            {% if e.kind == 'call_transcript' %}<span class="badge b-warn">spoken on a call</span>{% elif not e.trusted %}<span class="badge b-warn">written by customer</span>{% endif %}
+            {% if e.content.injection_suspected %}<span class="badge b-bad">manipulation attempt, ignored</span>{% endif %}
+            <div>{{ e.summary }}</div>
+            {% if e.content.text %}<div class="quote">“{{ e.content.text }}”</div>{% endif %}
+          </div>
+        </div>
+      {% endfor %}
+      </div>
+    </details>
+
+    <details class="section">
+      <summary>Agent run log<span class="hint">{{ a.steps | length }} steps{% if a.seconds >= 1 %} · {{ a.seconds | round | int }}s{% endif %}</span></summary>
+      <div class="body">
+      <ol class="timeline small">
+        {% for s in a.steps %}
+          {% set k = s.kind %}
+          <li><span class="n">{{ loop.index }}</span>
+            <span class="who">{{ s.agent }}</span>
+            <span class="badge {{ 'b-ai' if k == 'ai' else 'b-warn' if k == 'tool' else 'b-info' if k == 'code+ai' else 'b-gray' }}">{{ 'AI' if k == 'ai' else 'tool call' if k == 'tool' else 'code + AI' if k == 'code+ai' else 'code' }}</span>
+            <div class="muted" style="margin-top:2px;word-break:break-word">{{ s.what }}</div></li>
+        {% endfor %}
+      </ol>
+      <div class="muted small">Model <span class="mono">{{ a.model }}</span> · analysed {{ a.created_at[:16].replace('T', ' ') }} UTC</div>
+      </div>
+    </details>
+
+    {% if audit %}
+    <details class="section">
+      <summary>Activity on this case<span class="hint">{{ audit | length }} entries</span></summary>
+      <div class="body">
+      {% for r in audit %}<div class="small" style="padding:3px 0"><span class="muted">{{ r.ts[:16].replace('T',' ') }}</span> · <b>{{ activity_label(r.action) }}</b> <span class="muted">by {{ r.actor }}</span></div>{% endfor %}
+      <div class="small" style="margin-top:8px"><a href="/audit">Open the full activity log →</a></div>
+      </div>
+    </details>
+    {% endif %}
+  </div>
+
+  <aside><div class="decision">
+    {% if submissions %}
+    <div class="card" style="border-color:color-mix(in srgb, var(--ok) 45%, transparent)">
+      <h3>✓ Filed with Razorpay</h3>
+      <div class="small">Razorpay has your contest on record{% if submissions[-1].date %} since {{ submissions[-1].date[:16].replace('T', ' ') }} UTC{% endif %}, with {{ submissions[-1].files }} document(s). It's now with the customer's bank to decide.</div>
+      <details class="small" style="margin-top:8px"><summary class="muted">The summary Razorpay received</summary>
+        <div class="quote" style="white-space:pre-wrap;font-style:normal;border-color:var(--ok);background:var(--ok-bg)">{{ submissions[-1].notes or 'Filed without a summary.' }}</div></details>
+    </div>
+    {% endif %}
+
+    {% if not submissions %}
+    <div class="card">
+      <h3>Your decision</h3>
+      {% if not allowed %}
+      <div class="banner demo small"><span><b>Razorpay isn't accepting a contest on this dispute.</b> It is {{ d.status | replace('_', ' ') }}{% if deadline.urgency == 'overdue' %} and respond-by has passed{% endif %}. The evidence pack below is still yours to keep.</span></div>
+      {% endif %}
+
+      <form method="post" action="/disputes/{{ d.dispute_id }}/approve" class="stack">
+        <label class="small" for="reply"><b>Your reply</b> <span class="muted">Built from proven claims. You can edit it.</span></label>
+        <textarea id="reply" name="reply_text">{{ a.reply_text }}</textarea>
+        {% if 'contest' in allowed %}<button class="block" name="action" value="contest" data-confirm="Code turns your reply and the records it cites into PDFs{{ ' with the files you added' if documents and not demo }}, uploads them to Razorpay and contests the full {{ amount }}. You can't take this back.">Approve &amp; contest {{ amount }}</button>
+        <div class="muted small">Files go in Razorpay's evidence fields: explanation letter, shipping proof, customer communication.</div>{% endif %}
+      </form>
+
+      {% if 'contest' in allowed %}
+      <form method="post" action="/disputes/{{ d.dispute_id }}/approve" class="stack" style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line)">
+        <label class="small" for="offer"><b>Concede part, contest the rest</b> <span class="muted">Up to {{ max_offer_pct }}%, enforced by code</span></label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span class="muted">Concede</span>
+          <input id="offer" type="text" name="offer_amount" inputmode="decimal" value="{{ a.advice.offer_amount or '' }}" placeholder="0.00" style="max-width:130px">
+          <span class="muted">{{ a.advice.currency }}</span>
+        </div>
+        {% if a.settle_note %}<label class="small muted" for="note">Note for the customer, to send on WhatsApp yourself</label>
+        <textarea id="note" name="note" style="min-height:76px">{{ a.settle_note }}</textarea>{% endif %}
+        <button class="secondary block" name="action" value="contest_partial" data-confirm="Razorpay gets your evidence and a contest for the disputed amount minus the part you concede. The conceded part goes back to the customer.">Contest the rest</button>
+      </form>
+      {% endif %}
+
+      <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line)" class="small">
+        <b>Evidence pack</b><br><a href="/disputes/{{ d.dispute_id }}/pack" target="_blank">Print or save as PDF</a> · <a href="/disputes/{{ d.dispute_id }}/pack?format=txt">Download .txt</a>
+      </div>
+
+      {% if 'accept' in allowed %}
+      <details style="margin-top:12px;padding-top:12px;border-top:1px solid var(--line)"><summary class="small muted">Accept the dispute</summary>
+        <form method="post" action="/disputes/{{ d.dispute_id }}/approve" class="stack" style="margin-top:8px">
+          <div class="small muted">Razorpay deducts {{ amount }} from your settlements and the case is lost. This can't be undone. To confirm, type ACCEPT.</div>
+          <input type="text" name="confirm" placeholder="ACCEPT" aria-label="Type ACCEPT to confirm">
+          <button class="danger block" name="action" value="accept">Accept dispute</button>
+        </form>
+      </details>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div></aside>
+</div>
+
+<dialog class="confirm" id="confirm-dialog" aria-labelledby="confirm-title">
+  <h3 id="confirm-title">Send this to Razorpay?</h3>
+  <p class="small muted" id="confirm-text" style="margin:0"></p>
+  <div class="row"><button type="button" class="secondary" id="confirm-no">Not yet</button><button type="button" id="confirm-yes">Yes, send it</button></div>
+</dialog>
+<script>
+(function () {
+  const dialog = document.getElementById('confirm-dialog');
+  let pending = null;
+  document.querySelectorAll('button[data-confirm]').forEach(btn => btn.addEventListener('click', e => {
+    if (!dialog.showModal) return;   // very old browser: the normal form post still works
+    e.preventDefault();
+    pending = btn;
+    document.getElementById('confirm-text').textContent = btn.dataset.confirm;
+    dialog.showModal();
+  }));
+  document.getElementById('confirm-no').onclick = () => dialog.close();
+  window.addEventListener('pageshow', e => { if (e.persisted) location.reload(); });   // Back button must not restore a frozen "Sending…"
+  document.getElementById('confirm-yes').onclick = () => {
+    dialog.close();
+    const btn = pending, form = btn.form;
+    const field = document.createElement('input');   // keep the action when the button is disabled
+    field.type = 'hidden'; field.name = btn.name; field.value = btn.value;
+    form.appendChild(field);
+    form.querySelectorAll('button').forEach(b => { b.disabled = true; });
+    btn.textContent = 'Sending…';
+    form.submit();
+  };
+})();
+</script>
+{% endif %}
+{% endblock %}

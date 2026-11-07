@@ -1,0 +1,113 @@
+"""
+All settings in one place, read from environment variables (or the .env file).
+
+DevOps analogy: this is like a ConfigMap. Code never hard-codes secrets or URLs.
+"""
+
+import os
+from dataclasses import dataclass
+
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+def load_env(path: str | None = None) -> None:
+    """Read KEY=VALUE lines from .env into os.environ (existing env vars win)."""
+    path = path or os.path.join(PROJECT_ROOT, ".env")
+    if not os.path.exists(path):
+        return
+    with open(path, encoding="utf-8") as f:
+        for raw in f:
+            line = raw.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
+    use_certifi_if_needed()
+
+
+def use_certifi_if_needed() -> None:
+    """python.org Python on macOS ships without trusted certificates, so every HTTPS call
+    fails with CERTIFICATE_VERIFY_FAILED. If certifi is installed, point Python at its bundle."""
+    if os.environ.get("SSL_CERT_FILE"):
+        return
+    try:
+        import certifi
+    except ImportError:
+        return
+    os.environ["SSL_CERT_FILE"] = certifi.where()
+
+
+@dataclass
+class Settings:
+    # Razorpay (test-mode keys start with rzp_test_). No keys = offline demo mode.
+    razorpay_key_id: str
+    razorpay_key_secret: str
+    razorpay_webhook_secret: str
+    # AI model (any OpenAI-compatible API) or "fake" for offline demo mode
+    llm_provider: str
+    llm_base_url: str
+    llm_api_key: str
+    llm_model: str
+    # Storage
+    database_path: str
+    store_path: str
+    # Seller rules (used by plain code, never by the AI)
+    settle_max: float           # rupees: disputes at or below this may get a partial-concession suggestion
+    max_offer_pct: int          # never concede more than this % of the disputed amount
+    # Protect the dashboard when it is on the public internet
+    admin_user: str
+    admin_password: str
+    # Webhooks without a valid signature are rejected unless this is on (local testing only)
+    allow_unverified_webhooks: bool
+    # Re-check open disputes with Razorpay every N minutes (0 = off). Catches changes even without webhooks.
+    watch_minutes: int = 5
+    # Demo mode only: put the sample cases back this many minutes after a visitor's last change (0 = off).
+    demo_reset_minutes: int = 30
+    # Protects the AI key on a public demo. 0 = no limit.
+    ai_runs_per_hour: int = 30
+    agent_turns_per_hour: int = 200   # dashboard agent; one question can take several turns
+    agent_model: str = ""             # dashboard agent's model; empty = agent switched off
+    # Speech-to-text for call recordings, using Gnani. No key = paste transcripts only.
+    gnani_api_key: str = ""
+    gnani_model: str = "prisma-v3.0"
+    gnani_language: str = "hi-IN,en-IN"   # Hindi and English, including the two mixed in one call
+    gnani_format: str = "transliterate"   # Hindi words in Latin letters ("theek hai"), so quotes, checks and PDFs all work
+    # Voice briefs: Gnani text-to-speech reads each case's summary to the seller in Hinglish
+    gnani_tts_model: str = "timbre-v2.5"
+    gnani_tts_voice: str = "Poorvi"
+    gnani_tts_language: str = "hi-en"
+
+
+def get_settings() -> Settings:
+    load_env()
+    e = os.environ.get
+    llm_key = e("LLM_API_KEY", "")
+    return Settings(
+        razorpay_key_id=e("RAZORPAY_KEY_ID", ""),
+        razorpay_key_secret=e("RAZORPAY_KEY_SECRET", ""),
+        razorpay_webhook_secret=e("RAZORPAY_WEBHOOK_SECRET", ""),
+        # If no AI key is set we fall back to the offline "fake" brain so the app still runs.
+        llm_provider=e("LLM_PROVIDER", "openai_compatible" if llm_key else "fake"),
+        llm_base_url=e("LLM_BASE_URL", "https://integrate.api.nvidia.com/v1"),
+        llm_api_key=llm_key,
+        llm_model=e("LLM_MODEL", ""),
+        database_path=e("DATABASE_PATH", os.path.join(PROJECT_ROOT, "data", "disputedesk.db")),
+        store_path=e("STORE_PATH", os.path.join(PROJECT_ROOT, "data", "store.json")),
+        settle_max=float(e("SETTLE_MAX_INR", "2000")),
+        max_offer_pct=int(e("MAX_OFFER_PCT", "50")),
+        admin_user=e("ADMIN_USER", "seller"),
+        admin_password=e("ADMIN_PASSWORD", ""),
+        allow_unverified_webhooks=e("ALLOW_UNVERIFIED_WEBHOOKS", "false").lower() == "true",
+        watch_minutes=int(e("WATCH_MINUTES", "5")),
+        demo_reset_minutes=int(e("DEMO_RESET_MINUTES", "30")),
+        ai_runs_per_hour=int(e("AI_RUNS_PER_HOUR", "30")),
+        agent_turns_per_hour=int(e("AGENT_TURNS_PER_HOUR", "200")),
+        agent_model=e("AGENT_MODEL", ""),
+        gnani_api_key=e("GNANI_API_KEY", ""),
+        gnani_model=e("GNANI_MODEL", "prisma-v3.0"),
+        gnani_language=e("GNANI_LANGUAGE", "hi-IN,en-IN"),
+        gnani_format=e("GNANI_FORMAT", "transliterate"),
+        gnani_tts_model=e("GNANI_TTS_MODEL", "timbre-v2.5"),
+        gnani_tts_voice=e("GNANI_TTS_VOICE", "Poorvi"),
+        gnani_tts_language=e("GNANI_TTS_LANGUAGE", "hi-en"),
+    )

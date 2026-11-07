@@ -1,0 +1,253 @@
+{
+ "_about": "Razorpay dispute, payment and order objects for OFFLINE DEMO MODE (no Razorpay keys needed). Shapes follow Razorpay's v1 Disputes, Payments and Orders APIs; amounts are in paise and times are Unix seconds. Nothing here is sent to Razorpay.",
+ "disputes": [
+  {
+   "id": "disp_DemoTote1001",
+   "entity": "dispute",
+   "payment_id": "pay_Demo1001Pmt",
+   "amount": 249900,
+   "currency": "INR",
+   "amount_deducted": 0,
+   "reason_code": "goods_or_services_not_received_or_partially_received",
+   "reason_description": "Goods or services not received",
+   "respond_by": 1794128400,
+   "status": "open",
+   "phase": "chargeback",
+   "created_at": 1792918800,
+   "evidence": {
+    "amount": 249900,
+    "summary": null,
+    "shipping_proof": null,
+    "billing_proof": null,
+    "cancellation_proof": null,
+    "customer_communication": null,
+    "proof_of_service": null,
+    "explanation_letter": null,
+    "refund_confirmation": null,
+    "access_activity_log": null,
+    "refund_cancellation_policy": null,
+    "term_and_conditions": null,
+    "others": null,
+    "submitted_at": null
+   }
+  },
+  {
+   "id": "disp_DemoWalt1002",
+   "entity": "dispute",
+   "payment_id": "pay_Demo1002Pmt",
+   "amount": 129900,
+   "currency": "INR",
+   "amount_deducted": 0,
+   "reason_code": "1062",
+   "reason_description": "Goods/services not as described",
+   "respond_by": 1793869200,
+   "status": "open",
+   "phase": "chargeback",
+   "created_at": 1793005200,
+   "evidence": {
+    "amount": 129900,
+    "summary": null,
+    "shipping_proof": null,
+    "billing_proof": null,
+    "cancellation_proof": null,
+    "customer_communication": null,
+    "proof_of_service": null,
+    "explanation_letter": null,
+    "refund_confirmation": null,
+    "access_activity_log": null,
+    "refund_cancellation_policy": null,
+    "term_and_conditions": null,
+    "others": null,
+    "submitted_at": null
+   }
+  },
+  {
+   "id": "disp_DemoKeyc1003",
+   "entity": "dispute",
+   "payment_id": "pay_Demo1003Pmt",
+   "amount": 49900,
+   "currency": "INR",
+   "amount_deducted": 0,
+   "reason_code": "1064",
+   "reason_description": "Goods/services not received",
+   "respond_by": 1793523600,
+   "status": "open",
+   "phase": "chargeback",
+   "created_at": 1793091600,
+   "evidence": {
+    "amount": 49900,
+    "summary": null,
+    "shipping_proof": null,
+    "billing_proof": null,
+    "cancellation_proof": null,
+    "customer_communication": null,
+    "proof_of_service": null,
+    "explanation_letter": null,
+    "refund_confirmation": null,
+    "access_activity_log": null,
+    "refund_cancellation_policy": null,
+    "term_and_conditions": null,
+    "others": null,
+    "submitted_at": null
+   }
+  },
+  {
+   "id": "disp_DemoSlev1004",
+   "entity": "dispute",
+   "payment_id": "pay_Demo1004Pmt",
+   "amount": 329900,
+   "currency": "INR",
+   "amount_deducted": 0,
+   "reason_code": "4855",
+   "reason_description": "Goods or services not provided",
+   "respond_by": 1794301200,
+   "status": "open",
+   "phase": "chargeback",
+   "created_at": 1793178000,
+   "evidence": {
+    "amount": 329900,
+    "summary": null,
+    "shipping_proof": null,
+    "billing_proof": null,
+    "cancellation_proof": null,
+    "customer_communication": null,
+    "proof_of_service": null,
+    "explanation_letter": null,
+    "refund_confirmation": null,
+    "access_activity_log": null,
+    "refund_cancellation_policy": null,
+    "term_and_conditions": null,
+    "others": null,
+    "submitted_at": null
+   }
+  }
+ ],
+ "payments": {
+  "pay_Demo1001Pmt": {
+   "id": "pay_Demo1001Pmt",
+   "entity": "payment",
+   "amount": 249900,
+   "currency": "INR",
+   "status": "captured",
+   "order_id": "order_Demo1001Ord",
+   "method": "card",
+   "captured": true,
+   "amount_refunded": 0,
+   "refund_status": null,
+   "contact": "+919000000000",
+   "notes": {
+    "shop_order": "DD-1001"
+   },
+   "created_at": 1791799200
+  },
+  "pay_Demo1002Pmt": {
+   "id": "pay_Demo1002Pmt",
+   "entity": "payment",
+   "amount": 129900,
+   "currency": "INR",
+   "status": "captured",
+   "order_id": "order_Demo1002Ord",
+   "method": "upi",
+   "captured": true,
+   "amount_refunded": 0,
+   "refund_status": null,
+   "contact": "+919000000000",
+   "notes": {
+    "shop_order": "DD-1002"
+   },
+   "created_at": 1791540000
+  },
+  "pay_Demo1003Pmt": {
+   "id": "pay_Demo1003Pmt",
+   "entity": "payment",
+   "amount": 49900,
+   "currency": "INR",
+   "status": "captured",
+   "order_id": "order_Demo1003Ord",
+   "method": "upi",
+   "captured": true,
+   "amount_refunded": 0,
+   "refund_status": null,
+   "contact": "+919000000000",
+   "notes": {
+    "shop_order": "DD-1003"
+   },
+   "created_at": 1791453600
+  },
+  "pay_Demo1004Pmt": {
+   "id": "pay_Demo1004Pmt",
+   "entity": "payment",
+   "amount": 329900,
+   "currency": "INR",
+   "status": "captured",
+   "order_id": "order_Demo1004Ord",
+   "method": "card",
+   "captured": true,
+   "amount_refunded": 0,
+   "refund_status": null,
+   "contact": "+919000000000",
+   "notes": {
+    "shop_order": "DD-1004"
+   },
+   "created_at": 1791540000
+  }
+ },
+ "orders": {
+  "order_Demo1001Ord": {
+   "id": "order_Demo1001Ord",
+   "entity": "order",
+   "amount": 249900,
+   "amount_paid": 249900,
+   "amount_due": 0,
+   "currency": "INR",
+   "receipt": "DD-1001",
+   "status": "paid",
+   "notes": {
+    "shipping_address": "14 MG Road, Indiranagar, Bengaluru, Karnataka 560038"
+   },
+   "created_at": 1791799080
+  },
+  "order_Demo1002Ord": {
+   "id": "order_Demo1002Ord",
+   "entity": "order",
+   "amount": 129900,
+   "amount_paid": 129900,
+   "amount_due": 0,
+   "currency": "INR",
+   "receipt": "DD-1002",
+   "status": "paid",
+   "notes": {
+    "shipping_address": "B-22 Sector 15, Noida, Uttar Pradesh 201301"
+   },
+   "created_at": 1791539880
+  },
+  "order_Demo1003Ord": {
+   "id": "order_Demo1003Ord",
+   "entity": "order",
+   "amount": 49900,
+   "amount_paid": 49900,
+   "amount_due": 0,
+   "currency": "INR",
+   "receipt": "DD-1003",
+   "status": "paid",
+   "notes": {
+    "shipping_address": "7 Park Street, Kolkata, West Bengal 700016"
+   },
+   "created_at": 1791453480
+  },
+  "order_Demo1004Ord": {
+   "id": "order_Demo1004Ord",
+   "entity": "order",
+   "amount": 329900,
+   "amount_paid": 329900,
+   "amount_due": 0,
+   "currency": "INR",
+   "receipt": "DD-1004",
+   "status": "paid",
+   "notes": {
+    "shipping_address": "301 Hiranandani Gardens, Powai, Mumbai, Maharashtra 400076"
+   },
+   "created_at": 1791539880
+  }
+ }
+}
