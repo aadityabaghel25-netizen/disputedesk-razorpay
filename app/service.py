@@ -12,7 +12,7 @@ import time
 import traceback
 from datetime import datetime, timedelta, timezone
 
-from . import agents, core, evidence, pdf
+from . import agents, core, evidence, pdf, translit
 from .config import Settings
 from .db import DB, now_iso
 from .demo import DemoRazorpay
@@ -613,8 +613,8 @@ class Service:
             text = sample
         else:
             try:
-                text = gnani_transcribe(self.settings.gnani_api_key, self.settings.gnani_model, self.settings.gnani_language,
-                                        audio, call["filename"], keyterms=self._listen_for(), output_format=self.settings.gnani_format)
+                text = translit.to_latin(gnani_transcribe(self.settings.gnani_api_key, self.settings.gnani_model, self.settings.gnani_language,
+                                                          audio, call["filename"], keyterms=self._listen_for(), output_format=self.settings.gnani_format))
             except LLMError as e:
                 self.db.update_call(call_id, status="failed", error=str(e)[:200])
                 self.db.audit("system", "call_failed", None, {"call_id": call_id})

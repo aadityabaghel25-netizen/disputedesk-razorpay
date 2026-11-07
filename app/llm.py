@@ -106,12 +106,12 @@ GNANI_TOPIC = ("A phone call in Hindi, English or both, between an Indian online
 
 
 def gnani_transcribe(api_key: str, model: str, language: str, audio: bytes, filename: str, keyterms: list[str] | None = None,
-                     poll_seconds: int = 10, max_polls: int = 30, output_format: str = "transliterate") -> str:
+                     poll_seconds: int = 10, max_polls: int = 30, output_format: str = "codemix") -> str:
     """Speech-to-text with Gnani's batch API: create a job, start it, poll, then fetch the transcript.
     Its instant endpoint stops at 30 seconds and can't separate speakers, so it doesn't suit phone calls.
     The seller reviews the result before it is saved, because speech models can mishear or invent words.
-    Indian customers and couriers often mix Hindi and English in one sentence. "transliterate" writes all of it in
-    Latin letters ("parcel aa gaya tha"), so the seller can read it, the quote checks work and the evidence PDF can hold it."""
+    Indian customers and couriers often mix Hindi and English in one sentence. "codemix" keeps English words in Latin
+    letters and Hindi in Devanagari; the batch API has no Latin-only option, so the caller converts it (app/translit.py)."""
     boundary = uuid.uuid4().hex
     # Phone audio is noisy, and order numbers are easy to mishear: key terms tell the model what to listen for.
     config = {"model": model, "language_code": language, "mode": "transcribe", "with_diarization": True, "num_speakers": 2,
@@ -305,12 +305,13 @@ class FakeLLM:
         return {"claims": claims}
 
 
-def gnani_speak(api_key: str, text: str, model: str = "timbre-v2.5", voice: str = "Poorvi", language: str = "hi-en") -> bytes:
+def gnani_speak(api_key: str, text: str, model: str = "timbre-v2.5", voice: str = "Poorvi", language: str = "hi-en",
+                container: str = "mp3", sample_rate: int = 24000) -> bytes:
     """Text-to-speech with Gnani: returns an MP3. The text is written by code from checked facts, never by the AI,
     so the voice can't say an amount or a deadline the rules didn't produce."""
     body = json.dumps({"text": text, "model": model, "voice": voice, "language": language, "speed": 1.0,
-                       "audio_config": {"sample_rate": 24000, "num_channels": 1, "sample_width": 2,
-                                        "encoding": "linear_pcm", "container": "mp3", "bitrate": "64k"}}).encode()
+                       "audio_config": {"sample_rate": sample_rate, "num_channels": 1, "sample_width": 2, "encoding": "linear_pcm",
+                                        "container": container, **({"bitrate": "64k"} if container == "mp3" else {})}}).encode()
     req = urllib.request.Request(GNANI_TTS, data=body, method="POST", headers={
         "User-Agent": "DisputeDesk/1.0", "X-API-Key-ID": api_key, "Content-Type": "application/json"})
     for wait in (5, 10, None):

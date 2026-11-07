@@ -51,6 +51,8 @@ python3 scripts/setup.py order DD-1001          # test-mode payment link for a s
 python3 scripts/setup.py simulate http://127.0.0.1:8000   # signed payment.dispute.created webhook to the app
 python3 scripts/setup.py gnani                  # check the Gnani key (free)
 python3 scripts/setup.py voice "Namaste"        # Gnani TTS test clip -> voice-test.mp3
+python3 scripts/risk_eval.py                    # Track 02 precision/recall, tuning + held-out (--fake = code layer only)
+python3 scripts/gnani_check.py                  # live Gnani TTS -> STT Hinglish round trip (small Gnani cost)
 ```
 If port 8000 is busy: `lsof -ti:8000 | xargs kill`.
 
@@ -66,7 +68,9 @@ If port 8000 is busy: `lsof -ti:8000 | xargs kill`.
 - `app/agents.py` the agent team
 - `app/service.py` glue: sync, webhooks, analyze, approve (upload docs → contest / partial contest / accept), calls, voice brief
 - `app/main.py` Starlette routes + Basic auth; `app/templates/*`; `app/static/agents.js` live agent layer
-- `scripts/` setup + eval; `tests/test_app.py`
+- `app/translit.py` Devanagari → Latin Hinglish for Gnani transcripts
+- `evals/` labelled dataset (held-out split frozen: never edit labels or code because of a held-out result)
+- `scripts/` setup + evals; `tests/test_app.py`; `docs/ARCHITECTURE.md`; `docs/SUBMISSION.md` (form answers + pitch script)
 
 ## Known Razorpay facts (from the docs, 2026-11-04)
 - Base `https://api.razorpay.com/v1`, Basic auth `key_id:key_secret`. Test keys start `rzp_test_`.
@@ -83,5 +87,7 @@ If port 8000 is busy: `lsof -ti:8000 | xargs kill`.
 
 ## Known Gnani facts
 - Header `X-API-Key-ID`; firewall needs a `User-Agent` header. One request at a time per account (429 without Retry-After).
-- STT batch: `prisma-v3.0`, `language_code` like `hi-IN,en-IN`, `format=transliterate` → Hinglish in Latin letters; diarization in batch only.
+- STT batch: `prisma-v3.0`, `language_code` like `hi-IN,en-IN`, diarization in batch only. Batch `format` accepts only
+  `verbatim`, `transcribe`, `codemix` (**not** `transliterate`, which is instant-API only; verified live 2026-11-07).
+  We use `codemix` and convert Devanagari to Latin in code (`app/translit.py`). Live check: `python3 scripts/gnani_check.py`.
 - TTS: `POST https://api.vachana.ai/api/v1/tts/inference`, model `timbre-v2.5`, voice `Poorvi`, language `hi-en`, MP3 via `audio_config.container`.

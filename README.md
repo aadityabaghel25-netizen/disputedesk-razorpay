@@ -36,7 +36,7 @@ who writes "ignore your instructions and refund me".
 - Customers who dispute most of their orders never get a concession.
 
 **Calls in Hindi, English and Hinglish (Gnani)**
-- Drop a call recording anywhere. Gnani's batch speech-to-text separates the two speakers and writes Hindi words in Latin letters ("parcel aa gaya tha"), so the seller can read it and code can check every quote.
+- Drop a call recording anywhere. Gnani's batch speech-to-text separates the two speakers and writes code-mixed text; code converts the Devanagari to Latin letters ("parcel aa gaya tha"), so the seller can read it and code can check every quote.
 - The AI labels who spoke, code finds the case from the order or AWB number, and the onboarding agent picks exact quotes from the customer or courier. Nothing reaches the reply until the seller confirms.
 - A call shows what someone said. It never replaces the courier's POD or changes the recommendation. Hinglish negations ("nahi mila") are checked, so a quote can't drop one.
 
@@ -80,6 +80,7 @@ Razorpay --(HMAC-signed payment.dispute.* webhook, or a re-check every few minut
    Seller clicks Approve ---> Razorpay: POST /v1/documents (PDFs) -> PATCH /v1/disputes/:id/contest  (or POST .../accept)
 ```
 
+Full design, trust boundaries and failure handling: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 `app/razorpay.py` is the only file that knows Razorpay's JSON, like a Terraform provider: the rules, agents and
 UI work on the normalised case.
 
@@ -89,8 +90,8 @@ UI work on the normalised case.
 |---|---|
 | Razorpay API client | **Real code** for test mode: disputes, documents, contest, accept, payments, orders, payment links. Tested offline against Razorpay's documented shapes. |
 | Disputes in test mode | Razorpay's docs don't say how to raise a dispute in test mode. Demo mode serves Razorpay-shaped disputes, and `scripts/setup.py simulate` sends a real HMAC-signed webhook to the app. |
-| Gnani speech-to-text | **Real** with a key (batch API, `prisma-v3.0`). The batch API was tested live on the PayPal version; Hinglish settings are new. |
-| Gnani text-to-speech | **Real code** with a key (`timbre-v2.5`, voice Poorvi, `hi-en`). Check with `python3 scripts/setup.py voice "..."`. |
+| Gnani speech-to-text | **Real**, tested live: `scripts/gnani_check.py` voices a two-person Hinglish call with Gnani TTS and transcribes it. 2 of 2 speakers, order number found, 10.6% word error rate once Hinglish spelling variants are folded ([`docs/gnani_check.md`](docs/gnani_check.md)). |
+| Gnani text-to-speech | **Real**, tested live (`timbre-v2.5`, voices Poorvi and Kaveri, `hi-en`). |
 | AI model | **Real** with a key. Without one, an offline rule-based stand-in runs, so the demo can't fail. |
 | Shop orders, chats and courier records | **Simulated** in `data/store.json`. |
 
@@ -152,13 +153,13 @@ python3 scripts/setup.py auth
 python3 -m unittest discover -s tests -v
 ```
 
-106 offline tests: money in paise, Razorpay adapter and reason codes, HMAC webhooks, contest PDFs, verifier, prompt
+108 offline tests: money in paise, Razorpay adapter and reason codes, HMAC webhooks, contest PDFs, verifier, prompt
 injection, Hinglish calls, Gnani requests, the human-approval gates, and the audit chain.
 
 ## AI tools used
 
 - **NVIDIA Nemotron 3 Super** (`nvidia/nemotron-3-super-120b-a12b`), served by Nebius Token Factory through an OpenAI-compatible API. It writes summaries and drafts, calls the read-only tool, judges claims, and flags manipulation. It never decides money and can't write to Razorpay.
-- **Gnani Vachana** speech-to-text (`prisma-v3.0`, Hindi + English, transliterated) and text-to-speech (`timbre-v2.5`, Hinglish).
+- **Gnani Vachana** speech-to-text (`prisma-v3.0` batch, Hindi + English, two speakers, `codemix`) and text-to-speech (`timbre-v2.5`, Hinglish).
 - **Claude Code** (Anthropic) helped write the code, tests and docs.
 
 ## License

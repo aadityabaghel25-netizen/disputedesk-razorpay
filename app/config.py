@@ -71,7 +71,7 @@ class Settings:
     gnani_api_key: str = ""
     gnani_model: str = "prisma-v3.0"
     gnani_language: str = "hi-IN,en-IN"   # Hindi and English, including the two mixed in one call
-    gnani_format: str = "transliterate"   # Hindi words in Latin letters ("theek hai"), so quotes, checks and PDFs all work
+    gnani_format: str = "codemix"   # Hindi in Devanagari, English in Latin; code then writes it all in Latin letters (app/translit.py)
     # Voice briefs: Gnani text-to-speech reads each case's summary to the seller in Hinglish
     gnani_tts_model: str = "timbre-v2.5"
     gnani_tts_voice: str = "Poorvi"
@@ -106,7 +106,7 @@ def get_settings() -> Settings:
         gnani_api_key=e("GNANI_API_KEY", ""),
         gnani_model=e("GNANI_MODEL", "prisma-v3.0"),
         gnani_language=e("GNANI_LANGUAGE", "hi-IN,en-IN"),
-        gnani_format=e("GNANI_FORMAT", "transliterate"),
+        gnani_format=e("GNANI_FORMAT", "codemix"),
         gnani_tts_model=e("GNANI_TTS_MODEL", "timbre-v2.5"),
         gnani_tts_voice=e("GNANI_TTS_VOICE", "Poorvi"),
         gnani_tts_language=e("GNANI_TTS_LANGUAGE", "hi-en"),

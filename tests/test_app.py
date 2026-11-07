@@ -1115,6 +1115,22 @@ class AppTests(unittest.TestCase):
         self.assertEqual(seen[0].get_header("X-api-key-id"), "secret")
         self.assertEqual((body["voice"], body["language"], body["audio_config"]["container"]), ("Poorvi", "hi-en", "mp3"))
 
+    def test_devanagari_becomes_latin_hinglish_for_the_checks(self):
+        from app.translit import to_latin
+        self.assertEqual(to_latin("parcel last week आ गया था, but मैंने अभी तक खोला नहीं"),
+                         "parcel last week aa gaya tha, but mainne abhi tak khola nahin")
+        self.assertEqual(to_latin("Order DD-1003 मुझे नहीं मिला।"), "Order DD-1003 mujhe nahin mila.")
+        turn = core.parse_call_turns("Agent: Hello.\nCustomer: " + to_latin("मैंने कभी नहीं कहा कि parcel मिल गया"))[1]
+        self.assertFalse(core.call_quote_ok("parcel mil gaya", turn["text"]))   # the negation survives the conversion
+
+    def test_dropped_recording_is_converted_to_latin_letters(self):
+        s = self._service(gnani_api_key="k")
+        s.set_consent(True, "seller")
+        with mock.patch("app.service.gnani_transcribe", return_value="Speaker 1: Order DD-1001 recorded.\nSpeaker 2: हाँ, मिल गया।"):
+            call_id = s.enqueue_recording(b"sound", "c.mp3", "seller")
+            s._call_queue.join()
+        self.assertIn("han, mil gaya.", s.db.get_call(call_id)["transcript"])
+
     def test_dashboard_password(self):
         self.service.settings.admin_password = "s3cret"
         self.assertEqual(self.client.get("/").status_code, 401)

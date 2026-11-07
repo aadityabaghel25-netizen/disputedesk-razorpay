@@ -61,3 +61,12 @@ judged again on its own. A test reproduces the shifted numbering.
 Most false positives in the first run were one template, "photo taken before dispatch". The evidence only gave the
 photo's date, so the judge correctly said "before" wasn't proven. We left the frozen held-out labels alone, because
 changing labels after seeing results would make the score meaningless, and we report the number with and without that template.
+
+## Gnani's batch API couldn't write Hinglish in Latin letters
+The plan was Gnani's `transliterate` format, which writes Hindi in Latin letters. A live round trip (Gnani text-to-speech
+voices a two-person Hinglish call, Gnani speech-to-text transcribes it) failed with HTTP 400: `transliterate` only exists
+on the 30-second instant API, and phone calls need the batch API, which separates the two speakers. **Solved:** batch
+`codemix` (Hindi in Devanagari, English in Latin), then a small rule-based converter in code (`app/translit.py`), with a
+word list for English shopping words Gnani writes in Devanagari (पार्सल → parcel). Measured with `scripts/gnani_check.py`:
+2 of 2 speakers, order number found, quote intact, 10.6% word error rate once Hinglish spelling variants are folded
+(27.7% strict, because "theek" and "thik" are both correct Hinglish).
