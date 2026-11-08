@@ -1,7 +1,7 @@
 # Razorpay AI Buildathon: application draft
 
 Paste-ready answers for the Google Form (https://forms.gle/d9r2gvxp8cmoZhon9). **The form can't be edited after
-submitting**, so fill the video and GitHub links last and read everything once more.
+submitting**, so fill the video link last and read everything once more.
 
 | Field | Answer |
 |---|---|
@@ -9,7 +9,7 @@ submitting**, so fill the video and GitHub links last and read everything once m
 | In-person availability from September | _yours_ |
 | Selected track | Track 2: AI Risk Manager |
 | Project name / title | DisputeDesk: an AI risk desk that defends Indian sellers against chargebacks on Razorpay |
-| GitHub repository URL | _the public repo URL_ |
+| GitHub repository URL | https://github.com/aadityabaghel25-netizen/disputedesk-razorpay |
 | 5-min pitch video (Google Drive, public) | _the Drive link, shared as "Anyone with the link"_ |
 
 ## Project objectives (what does it solve?)

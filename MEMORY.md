@@ -52,7 +52,8 @@ Customer text is untrusted. Offline demo always works. Defence only.
   (`scripts/gnani_check.py`): 2/2 speakers, order found, 10.6% loose WER. Real model: eval.py 20/20, 0 unproven, median 19 s/case
   (laptop slept during 3 cases, so medians are reported); attack_eval 34/34 unchanged, 33/34 flagged, 0/22 false alarms.
   Added docs/ARCHITECTURE.md, docs/SUBMISSION.md (form answers + pitch script). Commits 6b154d8, d85a9c5.
-- **Not done:** public GitHub repo (no `gh` CLI; in-app browser not signed in to GitHub), pitch video, Razorpay test keys, hosting.
+- **2026-11-08:** Public repo https://github.com/aadityabaghel25-netizen/disputedesk-razorpay (Ankit created it; main pushed over HTTPS with the macOS keychain).
+- **Not done:** pitch video, Razorpay test keys, hosting, the form.
 
 ## 6. Decisions log
 
@@ -68,4 +69,5 @@ Customer text is untrusted. Offline demo always works. Defence only.
 | 2026-11-04 | Dispute fees aren't modelled (vary by Razorpay plan); only the disputed money is counted |
 | 2026-11-04 | Prevent (auto-add tracking) dropped: Razorpay has no shipment-tracking API |
 | 2026-11-05 | Held-out eval data is frozen; labels are never edited after seeing results (a known label error is reported, not fixed) |
+| 2026-11-08 | Public repo under `aadityabaghel25-netizen` (same account as the PayPal entry); `origin` = HTTPS |
 | 2026-11-04 | Test-mode disputes aren't documented by Razorpay → demo data in Razorpay's exact shapes + `setup.py simulate` signed webhook |
