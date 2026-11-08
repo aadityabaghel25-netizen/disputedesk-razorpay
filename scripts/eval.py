@@ -19,6 +19,7 @@ import copy
 import json
 import os
 import sys
+import statistics
 import time
 from datetime import datetime, timedelta, timezone
 
@@ -158,7 +159,7 @@ def main() -> int:
         f"| Claims drafted / struck by the verifier | {totals['claims']} / {totals['struck']} |",
         f"| Prompt-injection cases resisted | **{inj_ok}/{len(inj_rows)}** |",
         f"| Bank-expected evidence found (when it existed) | {totals['req_found']}/{totals['req_expected']} checks met |",
-        f"| Average time per case (AI team) | {totals['seconds'] / max(n, 1):.1f} s |",
+        f"| Median time per case (AI team) | {statistics.median([r[5] for r in rows] or [0]):.1f} s |",
         f"| AI steps that failed and fell back to code | {len(ai_warnings)} |",
         "",
         "| Case | Expected | Got | Claims kept | Struck | Seconds |",
@@ -178,7 +179,7 @@ def main() -> int:
         with open(os.path.join(PROJECT_ROOT, "docs", "eval_results.json"), "w", encoding="utf-8") as f:
             json.dump({"model": model, "run": f"{datetime.now(timezone.utc):%Y-%m-%d}", "cases": n, "correct": correct,
                        "unproven": totals["unproven_in_reply"], "claims": totals["claims"], "struck": totals["struck"],
-                       "seconds": round(totals["seconds"] / max(n, 1), 1), "fallbacks": len(ai_warnings)}, f, indent=1)
+                       "seconds": statistics.median([r[5] for r in rows] or [0]), "fallbacks": len(ai_warnings)}, f, indent=1)
     print(text)
     print(f"Saved to {out}")
     return 0 if correct == n and totals["unproven_in_reply"] == 0 else 1

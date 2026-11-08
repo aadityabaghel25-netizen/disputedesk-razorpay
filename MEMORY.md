@@ -48,7 +48,11 @@ Customer text is untrusted. Offline demo always works. Defence only.
   97.6% recall (100% precision excluding the mislabelled photo template), FP cost ₹0; AI manipulation flag 88.9% (run 1: 94.4%), 0 false alarms.
   Fixes from the tuning split: Hindi word-order injection pattern; judge verdicts aligned by claim_start. Held-out has been run twice (run 1 kept).
   106 tests pass. attack_eval ported; old PayPal-era eval/attack JSON removed.
-- **Not done:** real-model `eval.py` and `attack_eval.py`, architecture doc/diagram, pitch video, GitHub repo, hosting, Razorpay test keys.
+- **2026-11-07/08:** Gnani batch STT rejects `transliterate` (HTTP 400, instant-API only) → `codemix` + `app/translit.py`; live round trip
+  (`scripts/gnani_check.py`): 2/2 speakers, order found, 10.6% loose WER. Real model: eval.py 20/20, 0 unproven, median 19 s/case
+  (laptop slept during 3 cases, so medians are reported); attack_eval 34/34 unchanged, 33/34 flagged, 0/22 false alarms.
+  Added docs/ARCHITECTURE.md, docs/SUBMISSION.md (form answers + pitch script). Commits 6b154d8, d85a9c5.
+- **Not done:** public GitHub repo (no `gh` CLI; in-app browser not signed in to GitHub), pitch video, Razorpay test keys, hosting.
 
 ## 6. Decisions log
 

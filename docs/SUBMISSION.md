@@ -27,7 +27,9 @@ Hindi, English and Hinglish call recordings into checkable quotes, and reads eac
 
 Measured on a frozen held-out set (40 cases, 370 labelled claims): the verifier catches 97.6% of unproven claims with
 88.2% precision (100% excluding one template we mislabelled), and its false positives changed no decision (₹0 cost).
-The AI manipulation flag caught 88.9–94.4% of held-out attacks, Hinglish included, with no false alarms.
+The AI manipulation flag caught 88.9–94.4% of held-out attacks, Hinglish included, with no false alarms, and in 34 attack
+runs through the full team no attack changed the decision or the reply. End to end on 20 cases: 20/20 decisions right,
+0 unproven claims in any reply.
 Defence only: it answers disputes with the seller's own records and has no tool that writes anywhere on its own.
 
 ## Build challenges and how they were solved

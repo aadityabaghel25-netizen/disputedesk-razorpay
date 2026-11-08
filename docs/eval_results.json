@@ -1,0 +1,12 @@
+{
+ "model": "nvidia/nemotron-3-super-120b-a12b",
+ "run": "2026-11-08",
+ "cases": 20,
+ "correct": 20,
+ "unproven": 0,
+ "claims": 91,
+ "struck": 3,
+ "seconds": 19.1,
+ "fallbacks": 0,
+ "seconds_note": "median per case; the laptop slept during three cases"
+}

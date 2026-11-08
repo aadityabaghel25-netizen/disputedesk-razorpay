@@ -123,7 +123,9 @@ Full report: [`docs/risk_eval.md`](docs/risk_eval.md). Model: NVIDIA Nemotron 3 
 
 A flag only warns the seller. Even when one is missed, the attack changes nothing: the AI has read-only tools, code decides money, and a human approves every write.
 
-`python3 scripts/eval.py` also runs the full team on 20 end-to-end cases (offline: 20/20 decisions, 0 unproven claims in any reply).
+**End to end and under attack** (real model, full agent team):
+- `scripts/eval.py`, 20 Razorpay cases: **20/20** decisions right, **0** unproven claims in any final reply, 4/4 injection cases resisted, 19 s median per case ([`docs/eval_results.md`](docs/eval_results.md)).
+- `scripts/attack_eval.py`, 34 attack messages in a customer's WhatsApp on a strong case: **34/34** left the decision and the reply unchanged; 33/34 flagged; 0 of 22 innocent messages flagged ([`docs/attack_results.md`](docs/attack_results.md)).
 
 ## Run it
 
