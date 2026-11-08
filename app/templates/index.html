@@ -28,7 +28,7 @@
     <li data-step="investigate"><span class="node" aria-hidden="true">3</span>Investigate<small>Rules and risk</small></li>
     <li data-step="draft"><span class="node" aria-hidden="true">4</span>Draft<small>Cited claims</small></li>
     <li data-step="verify"><span class="node" aria-hidden="true">5</span>Verify<small>Strikes the unproven</small></li>
-    <li data-step="advise"><span class="node" aria-hidden="true">6</span>Advise<small>Code, in cents</small></li>
+    <li data-step="advise"><span class="node" aria-hidden="true">6</span>Advise<small>Code, in paise</small></li>
     <li class="you"><span class="node" aria-hidden="true">✓</span>You approve<small>Only you can send</small></li>
   </ol>
   <div class="live-line" id="live-line" aria-live="polite"><span class="pulse idle"></span><span>Connecting to agents…</span></div>
@@ -40,7 +40,7 @@
 </div>
 
 <div class="stats">
-  <div class="stat"><div class="top">Money at stake</div><div class="n">${{ stats.at_stake }}</div><div class="l">in {{ stats.open }} open dispute{{ '' if stats.open == 1 else 's' }}</div></div>
+  <div class="stat"><div class="top">Money at stake</div><div class="n">{{ stats.at_stake }}</div><div class="l">in {{ stats.open }} open dispute{{ '' if stats.open == 1 else 's' }}</div></div>
   <div class="stat"><div class="top">Waiting for your approval</div><div class="n">{{ stats.ready }}</div><div class="l">{{ stats.filed }} filed with Razorpay{% if stats.won or stats.lost %} · {{ stats.won }} won, {{ stats.lost }} lost{% endif %}</div></div>
   <div class="stat"><div class="top">Manipulation blocked</div><div class="n">{{ stats.injections }}</div><div class="l">buyer messages that tried to instruct the AI</div></div>
   <div class="stat"><div class="top">Unproven claims struck</div><div class="n">{{ stats.struck }}</div><div class="l">caught before the bank saw them</div></div>

@@ -27,3 +27,6 @@ reports/
 # Private planning notes
 docs/research/
 voice-test.mp3
+
+# Pitch video (upload to Google Drive, not GitHub)
+pitch/*.mp4

@@ -171,7 +171,7 @@ class Service:
                     and not core.seller_submissions(by_id[a["dispute_id"]]) and not core.dispute_outcome(by_id[a["dispute_id"]]))
         outcomes = [core.dispute_outcome(d) for d in disputes]
         return {
-            "open": len(open_), "at_stake": core.from_cents(at_stake),
+            "open": len(open_), "at_stake": core.rupees_text(at_stake),
             "analysed": len(analyses), "fight": decisions.count("fight"), "settle": decisions.count("settle"),
             "review": decisions.count("review"),
             "injections": sum(1 for a in analyses if any("instructions to an AI" in w for w in a["warnings"])),
