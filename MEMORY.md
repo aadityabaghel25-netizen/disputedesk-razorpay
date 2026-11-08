@@ -53,7 +53,7 @@ Customer text is untrusted. Offline demo always works. Defence only.
   (laptop slept during 3 cases, so medians are reported); attack_eval 34/34 unchanged, 33/34 flagged, 0/22 false alarms.
   Added docs/ARCHITECTURE.md, docs/SUBMISSION.md (form answers + pitch script). Commits 6b154d8, d85a9c5.
 - **2026-11-08:** Public repo https://github.com/aadityabaghel25-netizen/disputedesk-razorpay (created by Aaditya; main pushed over HTTPS with the macOS keychain).
-- **2026-11-08:** Pitch video made by Claude: `pitch/DisputeDesk-pitch.mp4` (4:34, 1080p, gitignored), real model on demo data, Gnani TTS narration (Poorvi, en-IN); scenes + timings in `pitch/VOICEOVER.md`. Recorder (Playwright + CDP screencast + ffmpeg) lives in the session scratchpad, not the repo. Fixed leftovers: home page showed `$` (now ₹ via rupees_text), "cents" → paise, US call-consent wording → DPDP Act.
+- **2026-11-08:** Pitch video made by Claude: `pitch/DisputeDesk-pitch.mp4` (4:33, 1080p, gitignored; credits Aaditya Baghel on the title card, name not spoken because the TTS pronunciation could not be checked), real model on demo data, Gnani TTS narration (Poorvi, en-IN); scenes + timings in `pitch/VOICEOVER.md`. Recorder (Playwright + CDP screencast + ffmpeg) lives in the session scratchpad, not the repo. Fixed leftovers: home page showed `$` (now ₹ via rupees_text), "cents" → paise, US call-consent wording → DPDP Act.
 - **Not done:** upload video to Drive (Anyone with the link), Razorpay test keys, hosting, the form (it now also asks for a resume and 6 or 12 months; the site says applications close 5 September, so confirm the cycle is still open).
 
 ## 6. Decisions log
