@@ -6,7 +6,7 @@ Read this file first, then `MEMORY.md` (project facts, decisions log, status) an
 the application form asks for them.
 
 ## Who you are working with
-- **Ankit Solanki**: student with a DevOps background (AWS, Terraform, K8s, Python), banking/fintech experience.
+- **Aaditya Baghel**: student with a DevOps background (AWS, Terraform, K8s, Python), banking/fintech experience.
   **New to building AI apps.** He asked to be taught from the basics while building.
 - Explain each new AI concept in plain words with a DevOps analogy before using it.
 - He is on **macOS**, Python from **Anaconda** (`python3`), browser **Chrome**, shell **zsh**.

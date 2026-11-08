@@ -5,11 +5,11 @@
 
 ## 1. Who and what
 
-- **Builder:** Ankit Solanki. Student with a DevOps background (AWS, Terraform, Kubernetes, Python) and
+- **Builder:** Aaditya Baghel (credited on the repo, LICENSE and pitch video). Student with a DevOps background (AWS, Terraform, Kubernetes, Python) and
   banking/fintech experience. **New to building AI apps**, so explain every new AI concept in plain language,
   with DevOps analogies, before using it.
 - **Project:** DisputeDesk for Razorpay, "an AI risk desk that defends small Indian sellers against chargebacks".
-- **Origin:** a port of DisputeDesk, Ankit's PayPal AI Hackathon entry (`~/Downloads/disputedesk`, submitted to Devpost
+- **Origin:** a port of DisputeDesk, the PayPal AI Hackathon entry (`~/Downloads/disputedesk`, submitted to Devpost
   on Nov 1, 2026). This is a separate repo. Don't change the PayPal one.
 
 ## 2. The program (hard facts)
@@ -52,7 +52,7 @@ Customer text is untrusted. Offline demo always works. Defence only.
   (`scripts/gnani_check.py`): 2/2 speakers, order found, 10.6% loose WER. Real model: eval.py 20/20, 0 unproven, median 19 s/case
   (laptop slept during 3 cases, so medians are reported); attack_eval 34/34 unchanged, 33/34 flagged, 0/22 false alarms.
   Added docs/ARCHITECTURE.md, docs/SUBMISSION.md (form answers + pitch script). Commits 6b154d8, d85a9c5.
-- **2026-11-08:** Public repo https://github.com/aadityabaghel25-netizen/disputedesk-razorpay (Ankit created it; main pushed over HTTPS with the macOS keychain).
+- **2026-11-08:** Public repo https://github.com/aadityabaghel25-netizen/disputedesk-razorpay (created by Aaditya; main pushed over HTTPS with the macOS keychain).
 - **2026-11-08:** Pitch video made by Claude: `pitch/DisputeDesk-pitch.mp4` (4:34, 1080p, gitignored), real model on demo data, Gnani TTS narration (Poorvi, en-IN); scenes + timings in `pitch/VOICEOVER.md`. Recorder (Playwright + CDP screencast + ffmpeg) lives in the session scratchpad, not the repo. Fixed leftovers: home page showed `$` (now ₹ via rupees_text), "cents" → paise, US call-consent wording → DPDP Act.
 - **Not done:** upload video to Drive (Anyone with the link), Razorpay test keys, hosting, the form (it now also asks for a resume and 6 or 12 months; the site says applications close 5 September, so confirm the cycle is still open).
 
@@ -60,7 +60,7 @@ Customer text is untrusted. Offline demo always works. Defence only.
 
 | Date | Decision |
 |---|---|
-| 2026-11-04 | Separate project folder `~/Downloads/disputedesk-razorpay` with its own git repo (Ankit's choice) |
+| 2026-11-04 | Separate project folder `~/Downloads/disputedesk-razorpay` with its own git repo (builder's choice) |
 | 2026-11-04 | Track 02 (AI Risk Manager), positioned as a chargeback evidence responder |
 | 2026-11-04 | Adapter pattern: `app/razorpay.py` normalises Razorpay JSON into the existing case model, so core rules and agents stay gateway-neutral |
 | 2026-11-04 | Settle = contest a smaller `amount` (concede the rest). Razorpay blocks refunds during a dispute and has no buyer-offer channel |
@@ -71,5 +71,5 @@ Customer text is untrusted. Offline demo always works. Defence only.
 | 2026-11-04 | Prevent (auto-add tracking) dropped: Razorpay has no shipment-tracking API |
 | 2026-11-05 | Held-out eval data is frozen; labels are never edited after seeing results (a known label error is reported, not fixed) |
 | 2026-11-08 | Public repo under `aadityabaghel25-netizen` (same account as the PayPal entry); `origin` = HTTPS |
-| 2026-11-08 | Pitch narration by Gnani TTS (disclosed on the title card); Ankit may re-voice it from `pitch/VOICEOVER.md` |
+| 2026-11-08 | Pitch narration by Gnani TTS (disclosed on the title card); Aaditya may re-voice it from `pitch/VOICEOVER.md` |
 | 2026-11-04 | Test-mode disputes aren't documented by Razorpay → demo data in Razorpay's exact shapes + `setup.py simulate` signed webhook |
